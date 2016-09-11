@@ -1,0 +1,7 @@
+net.yetamine.osgi.jdbc
+Copyright 2016 Yetamine
+See http://yetamine.net/
+
+Inspired by Apache Aries SPI Fly (http://aries.apache.org/modules/spi-fly.html),
+especially the weaving technique has been adopted and adapted for the purpose of
+JDBC drivers/driver manager.
