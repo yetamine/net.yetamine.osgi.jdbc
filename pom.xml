@@ -59,6 +59,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
+                        <Bundle-Activator>net.yetamine.osgi.jdbc.internal.Activator</Bundle-Activator>
 
                         <Export-Package>
                             net.yetamine.osgi.jdbc
@@ -75,6 +76,19 @@
             <artifactId>org.osgi.core</artifactId>
             <version>6.0.0</version>
             <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-debug-all</artifactId>
+            <version>5.0.3</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.21</version>
         </dependency>
 
         <dependency>
