@@ -18,7 +18,9 @@
  * NOTICE:
  *
  * Taken from org.apache.aries.spifly.dynamic.OSGiFriendlyClassWriter and
- * adjusted to the Yetamine code style.
+ * adjusted to the Yetamine code style with a small patch that avoids any
+ * failures when getCommonSuperClass could not find such a class (Object
+ * is chosen then as a fallback - hopefully not making too much mess).
  */
 
 package net.yetamine.osgi.jdbc.internal;
@@ -32,6 +34,7 @@ import java.util.Set;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 
 /**
  * An override of ASM's default behaviour.
@@ -40,10 +43,10 @@ import org.objectweb.asm.ClassWriter;
  * Prevent {@link #getCommonSuperClass(String, String)} from loading classes
  * (which it was doing on the wrong {@link ClassLoader} anyway).
  */
-public final class OsgiClassWriter extends ClassWriter {
+public final class WeavingClassWriter extends ClassWriter {
 
     /** Internal name of {@code java.lang.Object}. */
-    private static final String OBJECT_INTERNAL_NAME = "java/lang/Object";
+    private static final String OBJECT_INTERNAL_NAME = Type.getInternalName(Object.class);
     /** Class loader to use for class resolution. */
     private final ClassLoader loader;
 
@@ -57,7 +60,7 @@ public final class OsgiClassWriter extends ClassWriter {
      * @param cl
      *            the class loader to use. It must not be {@code null}.
      */
-    public OsgiClassWriter(ClassReader cr, int flags, ClassLoader cl) {
+    public WeavingClassWriter(ClassReader cr, int flags, ClassLoader cl) {
         super(cr, flags);
         loader = Objects.requireNonNull(cl);
     }
@@ -70,7 +73,7 @@ public final class OsgiClassWriter extends ClassWriter {
      * @param cl
      *            the class loader to use. It must not be {@code null}.
      */
-    public OsgiClassWriter(int flags, ClassLoader cl) {
+    public WeavingClassWriter(int flags, ClassLoader cl) {
         super(flags);
         loader = Objects.requireNonNull(cl);
     }

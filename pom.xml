@@ -50,6 +50,10 @@
         <url>https://github.com/pdolezal/net.yetamine.osgi.jdbc.git</url>
     </scm>
 
+    <properties>
+        <findbugs.excludeFilterFile>${project.basedir}/cfg/findbugs/exclude-filter.xml</findbugs.excludeFilterFile>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -58,11 +62,17 @@
 
                 <configuration>
                     <instructions>
-                        <Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
                         <Bundle-Activator>net.yetamine.osgi.jdbc.internal.Activator</Bundle-Activator>
+                        <!-- Because of the weaving, rather do not allow multiple versions in parallel -->
+                        <Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
+
+                        <DynamicImport-Package>*</DynamicImport-Package>
 
                         <Export-Package>
-                            net.yetamine.osgi.jdbc
+                            net.yetamine.osgi.jdbc,
+                            net.yetamine.osgi.jdbc.support,
+                            net.yetamine.osgi.jdbc.thunk,
+                            net.yetamine.osgi.jdbc.tweak
                         </Export-Package>
                     </instructions>
                 </configuration>
@@ -74,7 +84,7 @@
         <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.core</artifactId>
-            <version>6.0.0</version>
+            <version>5.0.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -88,7 +98,8 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.21</version>
+            <version>1.7.0</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>

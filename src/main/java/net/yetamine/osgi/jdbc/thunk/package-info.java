@@ -15,6 +15,11 @@
  */
 
 /**
- * Implementation of the JDBC support core.
+ * Provides the thunk for calling the OSGi support core.
+ *
+ * <p>
+ * This package should be considered an implementation detail and it should not
+ * be used directly by any code, in spite of being published. Its publishing is
+ * necessary, so that the woven classes could call it.
  */
-package net.yetamine.osgi.jdbc.internal;
+package net.yetamine.osgi.jdbc.thunk;

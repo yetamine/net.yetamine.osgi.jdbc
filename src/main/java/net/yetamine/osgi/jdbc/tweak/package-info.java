@@ -15,6 +15,8 @@
  */
 
 /**
- * Implementation of the JDBC support core.
+ * Provides support for tweaking the JDBC integration, e.g., by limiting the
+ * weaving scope to the necessary minimum or to override the driver loading,
+ * which occurs by default when the bundle becomes active.
  */
-package net.yetamine.osgi.jdbc.internal;
+package net.yetamine.osgi.jdbc.tweak;

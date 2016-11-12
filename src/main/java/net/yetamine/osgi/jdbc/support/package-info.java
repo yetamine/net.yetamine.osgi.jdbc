@@ -15,6 +15,6 @@
  */
 
 /**
- * Implementation of the JDBC support core.
+ * This package contains various supportive classes.
  */
-package net.yetamine.osgi.jdbc.internal;
+package net.yetamine.osgi.jdbc.support;

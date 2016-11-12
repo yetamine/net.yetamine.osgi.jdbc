@@ -15,35 +15,43 @@
  */
 
 /**
- * Support for JDBC drivers in OSGi.
+ * <h1>Support for JDBC drivers in OSGi</h1>
+ *
+ * This bundle provides support for replacing {@link java.sql.DriverManager} in
+ * OSGi environment, while allowing JDBC drivers and clients to run in an OSGi
+ * container with no code modifications (except for providing the code as OSGi
+ * bundles with the necessary manifest headers).
+ *
+ * <h2>Implementation details</h2>
+ *
+ * The support, provided by this bundle, installs hooks to intercept calls from
+ * both drivers and clients to {@link java.sql.DriverManager} and redirects the
+ * driver- and connection-related calls to surrogate implementations, which are
+ * OSGi-friendly. This is achieved by a weaving hook that patches those classes
+ * on-the-fly. In order to support drivers provided by bootstrap delegation,
+ * {@link java.sql.DriverManager} can be used as a fallback.
  *
  * <p>
- * This bundle provides a surrogate of {@link java.sql.DriverManager}. The
- * surrogate implementation works fine in OSGi environment, unlike the original,
- * because it respects the OSGi class loading delegation model. In order to use
- * JDBC drivers and clients without modifications (except for providing the set
- * of required OSGi bundle headers), this bundle employs hooks to support the
- * common scenarios.
+ * The other hook, installed by this bundle, scans other bundles for declaring
+ * {@link java.sql.Driver} implementations for {@link java.util.ServiceLoader}.
+ * These classes are loaded (after weaving to use the surrogate implementation)
+ * to trigger the driver registration. The drivers, registered as the result of
+ * this action, are published as OSGi services.
  *
  * <p>
- * One of the installed hooks intercepts all calls, from both drivers and
- * clients, to the {@link java.sql.DriverManager} and redirects them to the
- * surrogate implementation which actually replaces original implementation.
- * Drivers registered to the original implementation (e.g., provided on the boot
- * classpath and registered via the system class loader) are bridged to the OSGi
- * environment as well, but the in-OSGi-provided drivers are preferred.
+ * The described approach has some limitations: it can't handle non-static code
+ * that invokes {@link java.sql.DriverManager} via reflection or any code which
+ * can't be processed by the weaving hook for any reasons.
+ *
+ * <h2>Published interfaces</h2>
+ *
+ * {@link net.yetamine.osgi.jdbc.DriverProvider} provides an imitation of the
+ * subset of {@link java.sql.DriverManager}'s methods which deals with making
+ * connections. The JDBC support registers a service with this interface that
+ * collects all registered drivers and yet includes the drivers available via
+ * {@link java.sql.DriverManager}.
  *
  * <p>
- * The other hook scans bundles for definitions of {@link java.sql.Driver} for
- * the declarations for {@link java.util.ServiceLoader} and registers them in
- * the surrogate implementation instead.
- *
- * <p>
- * Altogether, OSGi code using the {@link java.sql.DriverManager} and drivers
- * declaring themselves for it via {@link java.util.ServiceLoader} can be used
- * without any modifications. The troubles may occur with the code which loads
- * and handles drivers explicitly in a non-standard way. Even loading a driver
- * itself might be harmless as long as the bundle deals with imports correctly
- * and the driver binds to the {@link java.sql.DriverManager} as it should.
+ * Implementations of all interfaces in this package must be thread-safe.
  */
 package net.yetamine.osgi.jdbc;
