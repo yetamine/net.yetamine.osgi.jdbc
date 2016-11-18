@@ -74,6 +74,8 @@
                             net.yetamine.osgi.jdbc.thunk,
                             net.yetamine.osgi.jdbc.tweak
                         </Export-Package>
+
+                        <_includeresource>{OSGI-INF/permissions.perm=src/main/resources/OSGI-INF/permissions.perm}</_includeresource>
                     </instructions>
                 </configuration>
             </plugin>
