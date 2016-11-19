@@ -18,13 +18,20 @@ package net.yetamine.osgi.jdbc.internal;
 
 import java.sql.Driver;
 import java.sql.DriverAction;
+import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
@@ -36,7 +43,7 @@ import net.yetamine.osgi.jdbc.support.DriverReference;
  * original {@link java.sql.DriverManager} and OSGi, so that all registered
  * drivers can be published as OSGi services as well.
  */
-public final class DriverRegistrar {
+public final class DriverRegistrar implements BundleController {
 
     /* Implementation notes:
      *
@@ -50,8 +57,10 @@ public final class DriverRegistrar {
 
     /** Drivers available via this bridging registrar. */
     private final Map<DriverReference, DriverRegistration> drivers = new HashMap<>();
-    /** Drivers published as OSGi services by the driver instance. */
-    private final Map<DriverReference, ServiceRegistration<?>> services = new HashMap<>();
+    /** Drivers published as OSGi services by the driver registration. */
+    private final Map<DriverRegistration, ServiceRegistration<?>> services = new HashMap<>();
+    /** Set of the identifiers of currently operational bundles. */
+    private final Set<Long> operational = new HashSet<>();
     /** Bundle context for OSGi interactions. */
     private BundleContext bundleContext;
 
@@ -62,6 +71,8 @@ public final class DriverRegistrar {
         // Default constructor
     }
 
+    // Thunk support
+
     /**
      * Registers the given driver.
      *
@@ -70,21 +81,21 @@ public final class DriverRegistrar {
      * is not updated nor extended to reflect a possible change to mimic closely
      * {@link java.sql.DriverManager#registerDriver(Driver, DriverAction)}.
      *
-     * @param bundleId
-     *            the identifier of the registering bundle
      * @param driver
      *            the driver to register. It must not be {@code null}.
      * @param action
      *            the callback for the driver-related events. It must not be
      *            {@code null}.
+     * @param bundleId
+     *            the identifier of the registering bundle
      */
-    public void register(long bundleId, Driver driver, DriverAction action) {
+    public void register(Driver driver, DriverAction action, long bundleId) {
         final DriverRegistration registration = new DriverRegistration(driver, action, bundleId);
         final DriverReference reference = registration.reference(); // Non-null, passing all checks
 
         synchronized (this) {
             if ((drivers.putIfAbsent(reference, registration) == null) && (bundleContext != null)) {
-                publish(reference);
+                publish(registration);
             }
         }
     }
@@ -98,17 +109,22 @@ public final class DriverRegistrar {
      * unregisters the driver and invokes the callback which was provided when
      * the driver was registered (if any such callback exists).
      *
-     * @param bundleId
-     *            the identifier of the registering bundle
      * @param driver
      *            the driver to unregister. It must not be {@code null}.
+     * @param bundleId
+     *            the identifier of the registering bundle
      */
-    public void unregister(long bundleId, Driver driver) {
+    public void unregister(Driver driver, long bundleId) {
         final DriverReference reference = new DriverReference(driver);
         final DriverRegistration registration;
 
         synchronized (this) {
             registration = drivers.get(reference);
+
+            // Here we check that the registering bundle is attempting to unregister
+            // the driver. It might follow more DriverManager and require a permission
+            // for the case when the call comes from a different bundle. On the other
+            // hand, it might interfere with the service-driven approach, right?
             if ((registration == null) || (registration.bundleId() != bundleId)) {
                 return;
             }
@@ -116,29 +132,81 @@ public final class DriverRegistrar {
             // Remove the registration record actually
             final DriverRegistration removed = drivers.remove(reference);
             assert (removed == registration);
-            conceal(reference);
+            conceal(registration);
         }
 
         registration.action().deregister(); // Outside of the synchronized block
     }
 
+    // BundleController
+
     /**
-     * Unregisters all drivers registered by the given bundle.
-     *
-     * @param bundleId
-     *            the identifier of the registering bundle
+     * @see net.yetamine.osgi.jdbc.internal.BundleController#suspend(org.osgi.framework.Bundle)
      */
-    public synchronized void unregister(long bundleId) {
-        for (Iterator<DriverRegistration> it = drivers.values().iterator(); it.hasNext();) {
-            final DriverRegistration registration = it.next();
-            if (registration.bundleId() == bundleId) {
-                it.remove(); // Remove here first!
-                conceal(registration.reference());
+    public void suspend(Bundle bundle) {
+        final long bundleId = bundle.getBundleId();
+
+        synchronized (this) {
+            if (operational.remove(bundleId)) {
+                registrations(bundleId).forEach(this::conceal);
             }
         }
     }
 
-    // Lifecycle support
+    /**
+     * @see net.yetamine.osgi.jdbc.internal.BundleController#resume(org.osgi.framework.Bundle)
+     */
+    public void resume(Bundle bundle) {
+        final long bundleId = bundle.getBundleId();
+
+        synchronized (this) {
+            if (operational.add(bundleId)) {
+                registrations(bundleId).forEach(this::publish);
+            }
+        }
+    }
+
+    /**
+     * @see net.yetamine.osgi.jdbc.internal.BundleController#cancel(org.osgi.framework.Bundle)
+     */
+    public void cancel(Bundle bundle) {
+        final long bundleId = bundle.getBundleId(); // Implicit null check
+
+        // Retrieve and remove all registrations for the bundle. Save the
+        // registrations in the list and rather process their callbacks
+        // outside of the synchronized block.
+
+        final List<DriverRegistration> registrations = new ArrayList<>();
+
+        synchronized (this) {
+            operational.remove(bundleId);
+            for (Iterator<DriverRegistration> it = drivers.values().iterator(); it.hasNext();) {
+                final DriverRegistration registration = it.next();
+                if (registration.bundleId() == bundleId) {
+                    registrations.add(registration);
+                    it.remove(); // First remove
+                    conceal(registration);
+                }
+            }
+        }
+
+        final List<Throwable> exceptions = registrations.stream()   // Process removed registrations outside the lock
+                .map(DriverRegistrar::deregister)                   // Invoke the callback
+                .filter(Objects::nonNull)                           // And collect failures
+                .collect(Collectors.toList());
+
+        if (exceptions.isEmpty()) { // All successful, nothing to throw
+            return;
+        }
+
+        // Make the umbrella exception to throw
+        final String f = "Unregistration for bundle %d failed.";
+        final RuntimeException exception = new RuntimeException(String.format(f, bundleId));
+        exceptions.forEach(exception::addSuppressed);
+        throw exception;
+    }
+
+    // Activator support
 
     /**
      * Binds this instance to the bundle in whose context the instance should
@@ -161,7 +229,7 @@ public final class DriverRegistrar {
 
         release();
         bundleContext = context;
-        drivers.keySet().forEach(this::publish);
+        drivers.values().forEach(this::publish);
     }
 
     /**
@@ -170,9 +238,12 @@ public final class DriverRegistrar {
      * that were registered on behalf of the bundle before.
      */
     public synchronized void release() {
-        drivers.keySet().forEach(this::conceal);
+        drivers.values().forEach(this::conceal);
+        assert services.isEmpty();
         bundleContext = null;
     }
+
+    // Implementation internals
 
     /**
      * Publishes a driver as an OSGi service on behalf of the current bundle.
@@ -181,44 +252,84 @@ public final class DriverRegistrar {
      * This method needs the common lock being held by the caller and
      * {@link #bundleContext} being non-{@code null}.
      *
-     * @param reference
-     *            the driver reference to employ. It must not be {@code null}.
+     * @param registration
+     *            the driver registration to employ. It must not be
+     *            {@code null}.
      */
-    private void publish(DriverReference reference) {
+    private void publish(DriverRegistration registration) {
         assert Thread.holdsLock(this);
         assert (bundleContext != null);
 
-        if (services.get(reference) != null) {
+        if ((services.get(registration) != null) || !operational.contains(registration.bundleId())) {
             return;
         }
 
-        final DriverRegistration registration = drivers.get(reference);
-        assert reference.equals(registration.reference());
+        final DriverReference reference = registration.reference();
         final Dictionary<String, Object> properties = new Hashtable<>();
         properties.put(DriverConstants.DRIVER_BUNDLE, registration.bundleId());
         properties.put(DriverConstants.DRIVER_VERSION, reference.driverVersion());
         properties.put(DriverConstants.DRIVER_CLASS, reference.driverClass().getTypeName());
-        services.put(reference, bundleContext.registerService(Driver.class, reference.driver(), properties));
+        services.put(registration, bundleContext.registerService(Driver.class, reference.driver(), properties));
     }
 
     /**
      * Conceals the driver from the OSGi framework, i.e., unregisters the driver
-     * service registered by {@link #publish(DriverReference)} before if exists.
+     * service registered by {@link #publish(DriverRegistration)} before if
+     * exists.
      *
      * <p>
      * This method needs the common lock being held by the caller, however,
      * {@link #bundleContext} may be {@code null} (the presence of service
      * registration matters).
      *
-     * @param reference
-     *            the driver reference to employ. It must not be {@code null}.
+     * @param registration
+     *            the driver registration to employ. It must not be
+     *            {@code null}.
      */
-    private void conceal(DriverReference reference) {
+    private void conceal(DriverRegistration registration) {
         assert Thread.holdsLock(this);
 
-        final ServiceRegistration<?> registration = services.remove(reference);
-        if (registration != null) { // Just cancel it out
-            registration.unregister();
+        final ServiceRegistration<?> service = services.remove(registration);
+        if (service != null) { // Just cancel it out
+            service.unregister();
+        }
+    }
+
+    /**
+     * Returns a {@link Stream} of registrations for the given bundle.
+     *
+     * <p>
+     * This method needs the common lock being held by the caller, however,
+     * {@link #bundleContext} may be {@code null} (the presence of service
+     * registration matters).
+     *
+     * @param bundleId
+     *            the identifier of the bundle
+     *
+     * @return the registrations created on behalf of the given bundle
+     */
+    private Stream<DriverRegistration> registrations(long bundleId) {
+        assert Thread.holdsLock(this);
+        return drivers.values().stream().filter(r -> r.bundleId() == bundleId);
+    }
+
+    /**
+     * Finishes the unregistration by invoking {@link DriverAction#deregister()}
+     * for the associated callback and returns the exception if any occurred.
+     *
+     * @param registration
+     *            the registration to effectively destroy. It must not be
+     *            {@code null}.
+     *
+     * @return the exception if any occurred, {@code null} otherwise (the
+     *         success case)
+     */
+    private static Throwable deregister(DriverRegistration registration) {
+        try { // This might be risky and fail
+            registration.action().deregister();
+            return null; // Success, no exception
+        } catch (Throwable t) {
+            return new RuntimeException(String.format("Unregistration problem with %s.", registration), t);
         }
     }
 
@@ -270,6 +381,31 @@ public final class DriverRegistrar {
         @Override
         public String toString() {
             return reference.toString();
+        }
+
+        /**
+         * @see java.lang.Object#equals(java.lang.Object)
+         */
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+
+            if (obj instanceof DriverRegistration) {
+                final DriverRegistration o = (DriverRegistration) obj;
+                return (bundleId == o.bundleId) && reference.equals(o.reference);
+            }
+
+            return false;
+        }
+
+        /**
+         * @see java.lang.Object#hashCode()
+         */
+        @Override
+        public int hashCode() {
+            return Objects.hash(bundleId, reference);
         }
 
         /**

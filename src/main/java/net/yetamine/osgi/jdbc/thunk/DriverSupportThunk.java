@@ -79,7 +79,7 @@ public final class DriverSupportThunk {
      * @see java.sql.DriverManager#registerDriver(Driver)
      */
     public static void registerDriver(Driver driver, long caller) throws SQLException {
-        Activator.registrar().register(caller, driver, NilDriverAction.instance());
+        Activator.registrar().register(driver, NilDriverAction.instance(), caller);
     }
 
     /**
@@ -99,7 +99,7 @@ public final class DriverSupportThunk {
      * @see java.sql.DriverManager#registerDriver(Driver, DriverAction)
      */
     public static void registerDriver(Driver driver, DriverAction action, long caller) throws SQLException {
-        Activator.registrar().register(caller, driver, NilDriverAction.ifNull(action));
+        Activator.registrar().register(driver, NilDriverAction.ifNull(action), caller);
     }
 
     /**
@@ -119,7 +119,7 @@ public final class DriverSupportThunk {
      * @see java.sql.DriverManager#deregisterDriver(Driver)
      */
     public static void deregisterDriver(Driver driver, long caller) throws SQLException {
-        Activator.registrar().unregister(caller, driver);
+        Activator.registrar().unregister(driver, caller);
     }
 
     /**

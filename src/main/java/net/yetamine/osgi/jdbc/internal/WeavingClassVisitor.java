@@ -387,7 +387,7 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
             woven = true;
 
             if (LOGGER.isTraceEnabled()) { // Due to the number of parameters, rather make a check
-                final String f = "Woven redirection of {}/{} to of thunk {}/{} with caller {}.";
+                final String f = "Woven redirection of {}/{} to thunk {}/{} with caller {}.";
                 LOGGER.trace(f, owner, invoking, thunkClass, thunkMethod, caller);
             }
         }

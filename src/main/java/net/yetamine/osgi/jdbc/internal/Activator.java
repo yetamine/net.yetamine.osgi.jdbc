@@ -36,12 +36,12 @@ public final class Activator implements BundleActivator {
     /** Common driver provider for the thunk, published as a service too. */
     private static volatile DriverProvider PROVIDER = DriverManagerAdapter.instance();
 
-    /** Driver providing service. */
-    private DriverTracking providingService;
-    /** Driver loading service. */
-    private DriverLoading loadingService;
     /** Weaving hook service. */
     private DriverWeaving weavingService;
+    /** Bundle extender implementation. */
+    private BundleExtender bundleExtender;
+    /** Driver tracking and providing service. */
+    private DriverTracking providingService;
 
     /**
      * Creates a new instance.
@@ -74,16 +74,15 @@ public final class Activator implements BundleActivator {
     public synchronized void start(BundleContext context) throws Exception {
         LOGGER.info("Activating JDBC support.");
 
+        bundleExtender = new BundleExtender(context, registrar());
         providingService = new DriverTracking(context);
         weavingService = new DriverWeaving(context);
-        loadingService = new DriverLoading(context, DriverMediator.instance());
 
         weavingService.open();      // Firstly, start weaving, so the all loaded drivers could be woven
-        loadingService.open();      // After weaving hook is ready, loading may start
+        bundleExtender.open();     // After weaving hook is ready, loading may start
         providingService.open();    // Finally, when some drivers are on the way, allow publishing them
 
-        // All successful, wire it
-        REGISTRAR.bind(context);
+        REGISTRAR.bind(context); // OK, wire it
         PROVIDER = providingService.provider();
 
         LOGGER.info("Activated JDBC support.");
@@ -99,7 +98,7 @@ public final class Activator implements BundleActivator {
         REGISTRAR.release();
 
         providingService.close();   // Firstly, stop the provider to let its dependencies to shut down as soon as possible
-        loadingService.close();     // Then ensure no more drivers could be loaded
+        bundleExtender.close();    // Then ensure no more drivers could be loaded or published
         weavingService.close();     // Then it is possible to switch off the weaving
 
         LOGGER.info("Deactivated JDBC support.");

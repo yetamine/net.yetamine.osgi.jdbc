@@ -9,15 +9,4 @@
 
         <Bug pattern="UC_USELESS_OBJECT" />
     </Match>
-
-    <Match>
-        <Class name="net.yetamine.osgi.jdbc.internal.DriverTracking$DriverTracker" />
-
-        <Or>
-            <Method name="addingService" />
-            <Method name="modifiedService" />
-        </Or>
-
-        <Bug pattern="JLM_JSR166_UTILCONCURRENT_MONITORENTER" />
-    </Match>
 </FindBugsFilter>

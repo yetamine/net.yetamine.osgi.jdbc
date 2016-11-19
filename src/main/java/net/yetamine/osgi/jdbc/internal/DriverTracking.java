@@ -45,7 +45,7 @@ final class DriverTracking implements AutoCloseable {
     /** Bundle context for registering the service and tracker. */
     private final BundleContext serviceContext;
     /** Actual service core tracking the drivers. */
-    private final DriverTracker serviceTracker;
+    private final Tracker serviceTracker;
     /** Public {@link DriverProvider} instance. */
     private final DriverProvider provider;
     /** Registration of {@link #provider}. */
@@ -60,7 +60,7 @@ final class DriverTracking implements AutoCloseable {
      */
     public DriverTracking(BundleContext bundleContext) {
         serviceContext = Objects.requireNonNull(bundleContext);
-        serviceTracker = new DriverTracker(serviceContext);
+        serviceTracker = new Tracker(serviceContext);
         provider = DriverProviderChain.of(serviceTracker, DriverManagerAdapter.instance());
     }
 
@@ -109,7 +109,7 @@ final class DriverTracking implements AutoCloseable {
      * services in order to provide them to its own clients that want to use the
      * drivers collectively.
      */
-    private static final class DriverTracker extends ServiceTracker<Driver, Driver> implements DriverSequence, DriverProvider {
+    private static final class Tracker extends ServiceTracker<Driver, Driver> implements DriverSequence, DriverProvider {
 
         /* Implementation notes:
          *
@@ -129,7 +129,7 @@ final class DriverTracking implements AutoCloseable {
          * @param bundleContext
          *            the bundle context to use. It must not be {@code null}.
          */
-        public DriverTracker(BundleContext bundleContext) {
+        public Tracker(BundleContext bundleContext) {
             super(bundleContext, Driver.class, null);
         }
 

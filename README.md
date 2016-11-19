@@ -18,6 +18,8 @@ The extender can't manage any drivers that are managed by `DriverManager` alread
 
 Another limitation stems from the driver registration procedure: a driver becomes registered during loading a class that is declared as a service for `ServiceLoader`. There is no better lifecycle definition and the actual driver class can be a different class. Moreover, loading a class is a single-shot action. So, the extender does load the declared service class, which enables the service class to register one or more drivers, but does rather not unregister any drivers as long as the registering bundle remains resolved. Instead, it just registers and unregisters these drivers as OSGi services dynamically in order to reflect the state of their registering bundle.
 
+For the sake of simplicity, drivers are not loaded from fragment bundles. Fragments may have wirings to multiple hosts which would make the resolution process more complex, while its value is questionable. Anyway, this provides an escape route for the cases where the driver class is loaded directly via `Class::forName` instead of via `DriverManager`, so attaching a fragment to such legacy bundles may solve some problems sufficiently even without using some of the tweaks like `WeavingFilter` and/or `BundleControl` that provide hooks for influencing the JDBC support behavior.
+
 
 ## Prerequisites ##
 
@@ -30,6 +32,7 @@ For building this project is needed:
 For using the built library is needed:
 
 * JRE 8 or newer.
+* OSGi framework compatible with OSGi R5. (Recommending [Karaf](http://karaf.apache.org/) which provides all necessary out of the box.)
 
 
 ## Licensing ##

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -239,6 +240,38 @@ final class OrderedSequence<K, V> {
         }
 
         return Optional.ofNullable(result);
+    }
+
+    /**
+     * Removes an item if matching the given predicate.
+     *
+     * <p>
+     * This method may be used to remove an existing item atomically with this
+     * pattern:
+     *
+     * <pre>
+     * sequence.get(key).ifPresent(item -&gt; sequence.remove(item.key(), item::equals))
+     * </pre>
+     *
+     * @param key
+     *            the key of the item
+     * @param condition
+     *            the condition for removal. It must not be {@code null}.
+     *
+     * @return the removed value if any
+     */
+    public Optional<Item<K, V>> remove(Object key, Predicate<? super Item<K, V>> condition) {
+        final Item<K, V> result;
+        synchronized (mapping) {
+            result = mapping.get(key);
+            if ((result == null) || !condition.test(result)) {
+                return Optional.empty();
+            }
+
+            mapping.remove(key);
+        }
+
+        return Optional.of(result);
     }
 
     /**
