@@ -35,7 +35,6 @@ import java.util.Set;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
-import org.osgi.framework.wiring.BundleWiring;
 import org.osgi.util.tracker.BundleTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,15 +154,6 @@ final class DriverLoading implements AutoCloseable {
 
         if (url == null) { // Missing the descriptor completely
             LOGGER.debug("No drivers declared in '{}'.", bundle);
-            return Collections.emptySet();
-        }
-
-        final BundleWiring wiring = AccessController.doPrivileged((PrivilegedAction<BundleWiring>) () -> {
-            return bundle.adapt(BundleWiring.class);
-        });
-
-        if (wiring == null) { // Maybe a fragment, or simply not allowed to get the wiring
-            LOGGER.debug("Skipped '{}' due to unavailable BundleWiring.", bundle);
             return Collections.emptySet();
         }
 

@@ -19,13 +19,10 @@ package net.yetamine.osgi.jdbc.internal;
 import java.sql.Driver;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
@@ -108,113 +105,23 @@ final class DriverTracking implements AutoCloseable {
     }
 
     /**
-     * Represents a driver publication as a service with the given ranking, as
-     * seen by the tracker, that determines the preference of the driver, when
-     * drivers are being chosen.
-     *
-     * <p>
-     * This class requires safe publication and both reading and writing the
-     * ranking needs appropriate protection. This implies that any use of
-     * {@link #ordering()} needs the protection as well, since it employs
-     * rankings of the compared instances.
-     */
-    private static final class DriverService {
-
-        /** Driver instance. */
-        private final Driver driver;
-        /** Driver ranking. */
-        private int ranking; // Volatile would be unnecessarily expensive
-
-        /**
-         * Creates a new instance.
-         *
-         * @param service
-         *            the driver. It must not be {@code null}.
-         * @param preference
-         *            the ranking of the driver
-         */
-        public DriverService(Driver service, int preference) {
-            driver = Objects.requireNonNull(service);
-            ranking = preference;
-        }
-
-        /**
-         * Provides a comparator according {@link #ranking()}.
-         *
-         * @return a comparator according {@link #ranking()}
-         */
-        public static Comparator<DriverService> ordering() {
-            return Comparator.<DriverService> comparingInt(DriverService::ranking).reversed();
-        }
-
-        /**
-         * @see java.lang.Object#toString()
-         */
-        @Override
-        public String toString() {
-            return String.format("DriverService[%s, ranking=%d]", driver, ranking);
-        }
-
-        /**
-         * Returns the driver.
-         *
-         * @return the driver
-         */
-        public Driver driver() {
-            return driver;
-        }
-
-        /**
-         * Returns the ranking of this driver.
-         *
-         * <p>
-         * The higher ranking, the more preferred driver. The relative order of
-         * the driver, influenced by the time of the driver being added, should
-         * be preserved, but it is not guaranteed.
-         *
-         * @return the ranking of this driver
-         */
-        int ranking() {
-            return ranking;
-        }
-
-        /**
-         * Sets the ranking of this driver.
-         *
-         * @param value
-         *            the ranking to set
-         */
-        void ranking(int value) {
-            ranking = value;
-        }
-    }
-
-    /**
      * A {@link DriverProvider} implementation tracking available {@link Driver}
      * services in order to provide them to its own clients that want to use the
      * drivers collectively.
      */
-    private static final class DriverTracker extends ServiceTracker<Driver, DriverService> implements DriverProvider, DriverSequence {
+    private static final class DriverTracker extends ServiceTracker<Driver, Driver> implements DriverSequence, DriverProvider {
 
-        /* Implementation note:
+        /* Implementation notes:
          *
-         * This class is internal enough and not published anywhere (besides the OSGi framework
-         * itself), so that we can affort the shortcut and inherit from both DriverProvider and
-         * DriverSequence to avoid an unncessary object allocation just to return a distinct
-         * DriverSequence instance.
+         * We need a fast lock-free sequence of the drivers in the order of
+         * their preference, but using the ServiceTracker's support would not
+         * satisfy our requirements well enough. So we rather use an own way.
          */
 
-        /**
-         * Drivers available for the provider to offer.
-         *
-         * <p>
-         * This list shall be kept sorted by the ranking of the contained
-         * drivers. Any change of a ranking shall be followed with re-sorting
-         * the list. The action should be atomic, so this instance serves as the
-         * lock for that too. As the side-effect, it makes the ranking update
-         * safely published.
-         */
-        private final List<DriverService> drivers = new CopyOnWriteArrayList<>();
+        /** Drivers available for the provider to offer. */
+        private final OrderedSequence<ServiceReference<Driver>, Driver> drivers = new OrderedSequence<>(
+                Comparator.comparing(OrderedSequence.Item::key) // Use the usual service ordering
+        );
 
         /**
          * Creates a new instance.
@@ -241,14 +148,14 @@ final class DriverTracking implements AutoCloseable {
          * @see net.yetamine.osgi.jdbc.DriverSequence#iterator()
          */
         public Iterator<Driver> iterator() {
-            return stream().iterator();
+            return drivers.values().iterator();
         }
 
         /**
          * @see net.yetamine.osgi.jdbc.DriverSequence#stream()
          */
         public Stream<Driver> stream() {
-            return drivers.stream().map(DriverService::driver);
+            return drivers.values().stream();
         }
 
         // Tracking methods
@@ -257,15 +164,10 @@ final class DriverTracking implements AutoCloseable {
          * @see org.osgi.util.tracker.ServiceTracker#addingService(org.osgi.framework.ServiceReference)
          */
         @Override
-        public DriverService addingService(ServiceReference<Driver> reference) {
-            final DriverService result = new DriverService(context.getService(reference), ranking(reference));
-            LOGGER.debug("Adding {}.", result);
-
-            synchronized (drivers) {
-                drivers.add(result);
-                drivers.sort(DriverService.ordering());
-            }
-
+        public Driver addingService(ServiceReference<Driver> reference) {
+            final Driver result = context.getService(reference);
+            LOGGER.debug("Adding driver service '{}'.", result);
+            drivers.add(reference, result);
             return result;
         }
 
@@ -274,16 +176,9 @@ final class DriverTracking implements AutoCloseable {
          *      java.lang.Object)
          */
         @Override
-        public void modifiedService(ServiceReference<Driver> reference, DriverService service) {
-            final int ranking = ranking(reference);
-
-            synchronized (drivers) {
-                if (service.ranking() != ranking) {
-                    LOGGER.debug("Updating ranking of {} to {}.", service, ranking);
-                    service.ranking(ranking);
-                    drivers.sort(DriverService.ordering());
-                }
-            }
+        public void modifiedService(ServiceReference<Driver> reference, Driver service) {
+            LOGGER.debug("Updating driver service '{}'.", service);
+            drivers.set(reference, service);
         }
 
         /**
@@ -291,23 +186,10 @@ final class DriverTracking implements AutoCloseable {
          *      java.lang.Object)
          */
         @Override
-        public void removedService(ServiceReference<Driver> reference, DriverService service) {
-            LOGGER.debug("Removing {}.", service);
-            drivers.remove(service);
+        public void removedService(ServiceReference<Driver> reference, Driver service) {
+            LOGGER.debug("Removing driver service '{}'.", service);
+            drivers.remove(reference);
             context.ungetService(reference);
-        }
-
-        /**
-         * Returns the ranking of the service by its reference.
-         *
-         * @param reference
-         *            the reference to use. It must not be {@code null}.
-         *
-         * @return the ranking of the service
-         */
-        private static int ranking(ServiceReference<?> reference) {
-            final Object result = reference.getProperty(Constants.SERVICE_RANKING);
-            return (result instanceof Integer) ? (Integer) result : 0;
         }
     }
 }

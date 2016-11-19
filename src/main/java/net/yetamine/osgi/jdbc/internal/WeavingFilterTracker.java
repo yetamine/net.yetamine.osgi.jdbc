@@ -67,7 +67,7 @@ final class WeavingFilterTracker extends ServiceTracker<WeavingFilter, WeavingFi
                 }
             } catch (Throwable t) {
                 remove(entry.getKey()); // Disable the filter then
-                LOGGER.warn("Disabled filter '{}' due to an exception.", t);
+                LOGGER.warn("Disabled filter '{}' due to an exception.", service, t);
             }
         }
 

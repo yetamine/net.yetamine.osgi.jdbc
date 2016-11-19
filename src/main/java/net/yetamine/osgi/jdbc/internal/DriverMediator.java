@@ -20,7 +20,7 @@ import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.wiring.BundleWiring;
+import org.osgi.framework.wiring.BundleRevision;
 
 /**
  * Mediates the callback between bundle tracking and registration facilities.
@@ -52,8 +52,11 @@ final class DriverMediator implements DriverLoading.Action {
      */
     public boolean load(Bundle bundle, String driver) throws Exception {
         return AccessController.doPrivileged((PrivilegedExceptionAction<Boolean>) () -> {
-            final BundleWiring wiring = bundle.adapt(BundleWiring.class);
-            if (wiring == null) { // Maybe a fragment, or simply not allowed to get the wiring
+            final BundleRevision revision = bundle.adapt(BundleRevision.class);
+            if ((revision == null) || ((revision.getTypes() & BundleRevision.TYPE_FRAGMENT) != 0)) {
+                // This is a fragment and these are not supported for hosting
+                // drivers actually; it could be perhaps possible, but at the
+                // cost of non-trivial bundle handling, so let's abort
                 return Boolean.FALSE;
             }
 
