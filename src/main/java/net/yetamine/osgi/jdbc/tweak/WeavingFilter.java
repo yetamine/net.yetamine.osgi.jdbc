@@ -24,8 +24,8 @@ import org.osgi.framework.Bundle;
  *
  * <p>
  * The JDBC support should consult all available OSGi services registering this
- * interface before weaving a class. If the {@link #acceptable(Bundle, String)}
- * method of any of them returns {@code false}, the class should not be woven.
+ * interface before weaving a class. If {@link #test(Bundle, String)} of any of
+ * them returns {@code false}, the class should not be woven.
  */
 @FunctionalInterface
 public interface WeavingFilter {
@@ -47,5 +47,5 @@ public interface WeavingFilter {
      * @return {@code false} if the class should not be woven, {@code true}
      *         otherwise
      */
-    boolean acceptable(Bundle bundle, String className);
+    boolean test(Bundle bundle, String className);
 }

@@ -51,10 +51,10 @@ final class WeavingFilterTracker extends ServiceTracker<WeavingFilter, WeavingFi
     }
 
     /**
-     * @see net.yetamine.osgi.jdbc.tweak.WeavingFilter#acceptable(org.osgi.framework.Bundle,
+     * @see net.yetamine.osgi.jdbc.tweak.WeavingFilter#test(org.osgi.framework.Bundle,
      *      java.lang.String)
      */
-    public boolean acceptable(Bundle bundle, String className) {
+    public boolean test(Bundle bundle, String className) {
         for (Map.Entry<ServiceReference<WeavingFilter>, WeavingFilter> entry : filters.entrySet()) {
             final WeavingFilter service = entry.getValue();
             if (service == null) { // Removed meanwhile?
@@ -62,7 +62,7 @@ final class WeavingFilterTracker extends ServiceTracker<WeavingFilter, WeavingFi
             }
 
             try { // This may fail with an exception!
-                if (!service.acceptable(bundle, className)) {
+                if (!service.test(bundle, className)) {
                     return false;
                 }
             } catch (Throwable t) {

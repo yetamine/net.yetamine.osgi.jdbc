@@ -107,7 +107,7 @@ final class WeavingHookService implements WeavingHook {
             return;
         }
 
-        if (!filter.acceptable(bundle, className)) { // Apply external filters
+        if (!filter.test(bundle, className)) { // Apply external filters
             LOGGER.debug("Omitted class {} from '{}': suppressed by filters.", className, bundle);
             return;
         }
