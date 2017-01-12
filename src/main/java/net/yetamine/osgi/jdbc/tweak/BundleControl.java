@@ -70,8 +70,9 @@ public interface BundleControl {
         },
 
         /**
-         * This condition is satisfied when the given bundle is <i>ACTIVE</i> or
-         * as long as stays in this state. It should be the commonly used option.
+         * This condition is satisfied when the bundle becomes <i>ACTIVE</i> and
+         * as long as it stays in this state. This should be the usual option to
+         * use if there is no special reason to prefer other options.
          */
         WHEN_RUNNING {
 
@@ -123,7 +124,7 @@ public interface BundleControl {
          * Returns the set of drivers chosen for loading.
          *
          * <p>
-         * The set is modifiable set, i.e., adding and removing values is
+         * The set is a modifiable set, i.e., adding and removing values is
          * possible, but it must be a subset of {@link #declaredDrivers()};
          * implementations may prevent adding illegal values by throwing an
          * exception on any such attempt, or be lenient and just ignore any
