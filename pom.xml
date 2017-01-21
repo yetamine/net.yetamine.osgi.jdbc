@@ -52,10 +52,16 @@
 
     <properties>
         <findbugs.excludeFilterFile>${project.basedir}/cfg/findbugs/exclude-filter.xml</findbugs.excludeFilterFile>
+        <pet4bnd.output>${project.build.directory}/exports.bnd</pet4bnd.output>
     </properties>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>net.yetamine</groupId>
+                <artifactId>pet4bnd-maven-plugin</artifactId>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -65,15 +71,8 @@
                         <Bundle-Activator>net.yetamine.osgi.jdbc.internal.Activator</Bundle-Activator>
                         <!-- Because of the weaving, rather do not allow multiple versions in parallel -->
                         <Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
-
                         <DynamicImport-Package>*</DynamicImport-Package>
-
-                        <Export-Package>
-                            net.yetamine.osgi.jdbc,
-                            net.yetamine.osgi.jdbc.support,
-                            net.yetamine.osgi.jdbc.thunk,
-                            net.yetamine.osgi.jdbc.tweak
-                        </Export-Package>
+                        <_include>${pet4bnd.output}</_include>
                     </instructions>
                 </configuration>
             </plugin>
