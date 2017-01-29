@@ -59,6 +59,9 @@ public final class DriverSupportThunk {
      * out of reach of other code.
      */
 
+    /**
+     * Prevents creating instances of this class.
+     */
     private DriverSupportThunk() {
         throw new AssertionError();
     }

@@ -326,6 +326,13 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
         }
 
         /**
+         * Prevents creating instances of this class.
+         */
+        private Thunk() {
+            throw new AssertionError();
+        }
+
+        /**
          * Returns the redirection target for the given method.
          *
          * @param method
@@ -335,10 +342,6 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
          */
         public static MethodReference method(MethodReference method) {
             return REDIRECTIONS.get(method);
-        }
-
-        private Thunk() {
-            throw new AssertionError();
         }
     }
 

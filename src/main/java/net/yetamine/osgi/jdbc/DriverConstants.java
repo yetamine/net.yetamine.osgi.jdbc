@@ -45,6 +45,9 @@ public final class DriverConstants {
      */
     public static final String DRIVER_VERSION = "driver.version";
 
+    /**
+     * Prevents creating instances of this class.
+     */
     private DriverConstants() {
         throw new AssertionError();
     }
