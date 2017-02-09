@@ -29,7 +29,7 @@ It is important that the extender bundle starts before any JDBC code, so that al
 * *org.objectweb.asm @ [5.0,6)*
 * *org.slf4j @ [1.7,2)*
 
-More advanced containers like [Karaf](http://karaf.apache.org/) provide these dependencies out of the box and it is not necessary to install them, which reduces the installation procedure a lot.
+More advanced containers like [Karaf](http://karaf.apache.org/) provide these dependencies out of the box and it is not necessary to install them, which reduces the installation procedure a lot. (And a feature for Karaf will be created in the future.)
 
 **Adjusting the start level of the extender bundle** is required, as explained above, so that the extender bundle could start before any JDBC code and therefore be able to adapt it. Of course, it assumes that bundles in your container have some reasonable start levels assigned and there is a suitable start level, dedicated for system services, when the extender bundle could be started.
 
@@ -52,6 +52,8 @@ Because the extender allows using `DriverManager` in your code in the usual way,
 ### Remarks and limitations ###
 
 * The extender does not publish, as OSGi services, the drivers that are not deployed as regular bundles in the container.  Drivers provided on the JVM classpath are available via `DriverManagerAdapter`, or via `DriverManager` (as they would have been without the extender anyway) together with all other available drivers, so they could be used anyway and usually with less troubles than without the extender.
+
+* The extender does not weave any class from any bundle appearing in the closure of its requirements to prevent recursive weaving that leads to obscure `NoClassDefFoundError` occurrences. Since no JDBC code is supposed to be a present in any of the extender dependencies, this intrinsic limitation has no practical effect.
 
 * The extender does not search any drivers in fragment bundles. Firstly, it would lead to technically complex solutions (and might not work very well); secondly, using fragment bundles for drivers does not look like a good idea anyway, but still could be used as an easier escape route in some situations.
 

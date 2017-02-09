@@ -26,6 +26,12 @@ import org.osgi.framework.Bundle;
  * The JDBC support should consult all available OSGi services registering this
  * interface before weaving a class. If {@link #test(Bundle, String)} of any of
  * them returns {@code false}, the class should not be woven.
+ *
+ * <p>
+ * Because filters are used by the JDBC support's weaving hook, all rules and
+ * restrictions of weaving hook implementations apply on the as well. Using a
+ * minimal requirement set and dependencies is strongly recommended, which
+ * includes, e.g., logging facilities.
  */
 @FunctionalInterface
 public interface WeavingFilter {

@@ -26,6 +26,7 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.yetamine.osgi.jdbc.support.WeavingSupport;
 import net.yetamine.osgi.jdbc.tweak.WeavingFilter;
 
 /**
@@ -67,7 +68,7 @@ final class WeavingFilterTracker extends ServiceTracker<WeavingFilter, WeavingFi
                 }
             } catch (Throwable t) {
                 remove(entry.getKey()); // Disable the filter then
-                LOGGER.warn("Disabled filter '{}' due to an exception.", service, t);
+                WeavingSupport.execute(() -> LOGGER.warn("Disabled filter '{}' due to an exception.", service, t));
             }
         }
 

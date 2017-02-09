@@ -36,6 +36,8 @@ import org.objectweb.asm.commons.JSRInlinerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.yetamine.osgi.jdbc.support.WeavingSupport;
+
 /**
  * ASM visitor to perform the weaving operation.
  */
@@ -257,7 +259,7 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
          */
         @Override
         public int hashCode() {
-            return name.hashCode() ^ name.hashCode();
+            return name.hashCode() ^ descriptor.hashCode();
         }
 
         /**
@@ -389,10 +391,10 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
             super.visitMethodInsn(opcode, thunkClass, thunkMethod, thunkDescriptor, false);
             woven = true;
 
-            if (LOGGER.isTraceEnabled()) { // Due to the number of parameters, rather make a check
+            WeavingSupport.execute(() -> {
                 final String f = "Woven redirection of {}/{} to thunk {}/{} with caller {}.";
                 LOGGER.trace(f, owner, invoking, thunkClass, thunkMethod, caller);
-            }
+            });
         }
     }
 }

@@ -16,13 +16,26 @@
 
 package net.yetamine.osgi.jdbc.internal;
 
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.OptionalLong;
+import java.util.Set;
+import java.util.function.Function;
 
+import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.framework.hooks.weaving.WeavingHook;
+import org.osgi.framework.wiring.BundleRevision;
+import org.osgi.framework.wiring.BundleWiring;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import net.yetamine.osgi.jdbc.tweak.WeavingFilter;
 
 /**
  * Encapsulates all components that handle class weaving.
@@ -58,9 +71,12 @@ final class DriverWeaving implements AutoCloseable {
             return;
         }
 
-        LOGGER.debug("Opening weaving service.");
+        final Set<Bundle> exclusions = requirementClosure(Collections.singleton(serviceContext.getBundle()));
+        LOGGER.debug("Opening weaving service with following bundles excluded from weaving: {}", exclusions);
         filterTracker.open(); // Start the tracking before the service starts weaving!
-        final WeavingHook hook = new WeavingHookService(serviceContext, filterTracker);
+        final Function<Bundle, OptionalLong> resolver = WeavingHookService::defaultCallerResolver;
+        final WeavingFilter protection = (bundle, className) -> !exclusions.contains(bundle);
+        final WeavingHook hook = new WeavingHookService(serviceContext, protection, filterTracker, resolver);
         service = serviceContext.registerService(WeavingHook.class, hook, null);
     }
 
@@ -80,5 +96,34 @@ final class DriverWeaving implements AutoCloseable {
         service = null;
 
         filterTracker.close(); // Stop the tracking after unregistering the weaving hook!
+    }
+
+    /**
+     * Computes the requirement closure of the given seed bundles.
+     *
+     * @param bundles
+     *            the seed bundles to exclude. It must not be {@code null}.
+     */
+    private static Set<Bundle> requirementClosure(Collection<Bundle> bundles) {
+        // Compute dependencies of the seed bundle tos prevent weaving anything from them
+        final Deque<Bundle> resolving = new ArrayDeque<>();
+        bundles.forEach(bundle -> resolving.push(Objects.requireNonNull(bundle)));
+        final Set<Bundle> result = new HashSet<>();
+
+        // Depth-first search for all required bundles to exclude them for sure
+        for (Bundle pending; ((pending = resolving.poll()) != null);) {
+            if (result.add(pending)) {
+                final BundleWiring wiring = pending.adapt(BundleWiring.class);
+                if (wiring == null) {
+                    continue;
+                }
+
+                wiring.getRequiredWires(BundleRevision.PACKAGE_NAMESPACE).forEach(wire -> {
+                    resolving.push(wire.getProviderWiring().getBundle());
+                });
+            }
+        }
+
+        return Collections.unmodifiableSet(result);
     }
 }
