@@ -122,6 +122,7 @@ public interface DriverProvider {
         }
 
         final List<SQLException> failures = new ArrayList<>();
+        boolean tried = false;
 
         for (Driver driver : drivers()) {
             try { // Attempt to get a connection, but don't throw until failing completely
@@ -129,13 +130,26 @@ public interface DriverProvider {
                 if (result != null) {
                     return result;
                 }
+
+                tried = true;
             } catch (SQLException e) {
                 failures.add(e);
             }
         }
 
-        final SQLException e = new SQLException(String.format("No suitable driver found for '%s'.", url), "08001");
-        failures.forEach(e::addSuppressed);
+        final String f = tried ? "No available driver succeeded to connect to '%s'." : "No driver found for '%s'.";
+        final SQLException e = new SQLException(String.format(f, url), "08001");
+
+        if (failures.size() != 1) {
+            // If there is a single failure, let's make the stack trace more
+            // traditional (and likely to contain the problem)
+            e.initCause(failures.get(0));
+        } else {
+            // Otherwise add all the exceptions, but do not prefer some as the
+            // cause, because it is not quite certain which driver is responsible
+            failures.forEach(e::addSuppressed);
+        }
+
         throw e;
     }
 }

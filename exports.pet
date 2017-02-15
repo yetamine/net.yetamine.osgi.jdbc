@@ -4,7 +4,7 @@
 $bundle: 1.1.0 < 2.0.0 @ none
 
 # Packages to export
-net.yetamine.osgi.jdbc:             1.0.0 @ none
+net.yetamine.osgi.jdbc:             1.0.0 @ micro
 net.yetamine.osgi.jdbc.support:     1.1.0 @ none
 net.yetamine.osgi.jdbc.thunk:       1.0.0 @ none
 net.yetamine.osgi.jdbc.tweak:       1.0.0 @ none
