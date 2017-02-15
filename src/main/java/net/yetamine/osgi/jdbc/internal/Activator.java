@@ -16,6 +16,9 @@
 
 package net.yetamine.osgi.jdbc.internal;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.sql.DriverManager;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,7 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.yetamine.osgi.jdbc.DriverProvider;
+import net.yetamine.osgi.jdbc.DriverSequence;
 import net.yetamine.osgi.jdbc.support.DriverManagerAdapter;
+import net.yetamine.osgi.jdbc.support.DriverReference;
 
 /**
  * Activates this bundle.
@@ -91,6 +96,8 @@ public final class Activator implements BundleActivator {
     public synchronized void start(BundleContext context) throws Exception {
         LOGGER.info("Activating JDBC support.");
 
+        initializeDriverManager();
+
         bundleExtender = new BundleExtender(context, registrar());
         providingService = new DriverTracking(context);
         weavingService = new DriverWeaving(context);
@@ -130,5 +137,27 @@ public final class Activator implements BundleActivator {
         executor.shutdown();
 
         LOGGER.info("Deactivated JDBC support.");
+    }
+
+    /**
+     * Forces {@link DriverManager} initialization, so that it does load initial
+     * drivers in a clean context (hopefully). This is the best-effort way to
+     * mitigate the shadows of the TCCL.
+     */
+    private static void initializeDriverManager() {
+        final DriverSequence drivers;
+
+        final ClassLoader current = Thread.currentThread().getContextClassLoader();
+        try { // Trigger loading DriverManager and fetch the available drivers
+            drivers = AccessController.doPrivileged((PrivilegedAction<DriverSequence>) () -> {
+                Thread.currentThread().setContextClassLoader(null);
+                return DriverManagerAdapter.instance().drivers();
+            });
+        } finally {
+            Thread.currentThread().setContextClassLoader(current);
+        }
+
+        // Reuse the nice DriverReference::toString (and lazy formatting)
+        drivers.forEach(driver -> LOGGER.info("Found bootstrap driver {}", new DriverReference(driver)));
     }
 }

@@ -1,7 +1,7 @@
 # OSGi package version definitions
 
 # Target bundle version (should match the final artifact version)
-$bundle: 1.1.0 < 2.0.0 @ none
+$bundle: 1.1.0 < 2.0.0 @ micro
 
 # Packages to export
 net.yetamine.osgi.jdbc:             1.0.0 @ micro
