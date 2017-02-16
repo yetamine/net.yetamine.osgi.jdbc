@@ -23,7 +23,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * An interface for providing driver services to consumers; this interface
@@ -121,8 +123,7 @@ public interface DriverProvider {
             throw new SQLException("The URL must not be null.", "08001");
         }
 
-        final List<SQLException> failures = new ArrayList<>();
-        boolean tried = false;
+        List<DriverFailure> failures = null;
 
         for (Driver driver : drivers()) {
             try { // Attempt to get a connection, but don't throw until failing completely
@@ -130,26 +131,89 @@ public interface DriverProvider {
                 if (result != null) {
                     return result;
                 }
-
-                tried = true;
             } catch (SQLException e) {
-                failures.add(e);
+                if (failures == null) {
+                    failures = new ArrayList<>();
+                }
+
+                failures.add(new DriverFailure(driver, e));
             }
         }
 
-        final String f = tried ? "No available driver succeeded to connect to '%s'." : "No driver found for '%s'.";
-        final SQLException e = new SQLException(String.format(f, url), "08001");
+        if (failures == null) {
+            throw new SQLException(String.format("No driver found for connecting to '%s'.", url), "08001");
+        }
 
-        if (failures.size() != 1) {
+        final String list = failures.stream().map(DriverFailure::toString).collect(Collectors.joining(", "));
+        final String f = "All suitable drivers failed to connect to '%s'; tried %s.";
+        final SQLException e = new SQLException(String.format(f, url, list), "08001");
+
+        if (failures.size() == 1) {
             // If there is a single failure, let's make the stack trace more
             // traditional (and likely to contain the problem)
-            e.initCause(failures.get(0));
+            e.initCause(failures.get(0).throwable());
         } else {
             // Otherwise add all the exceptions, but do not prefer some as the
             // cause, because it is not quite certain which driver is responsible
-            failures.forEach(e::addSuppressed);
+            failures.forEach(failure -> e.addSuppressed(failure.throwable()));
         }
 
         throw e;
+    }
+}
+
+/**
+ * A description of a failure.
+ */
+final class DriverFailure {
+
+    /** Exception describing the failure. */
+    private final Throwable throwable;
+    /** Failing driver. */
+    private final Driver driver;
+
+    /**
+     * Creates a new instance.
+     *
+     * @param d
+     *            the driver. It must not be {@code null}.
+     * @param t
+     *            the exception. It must not be {@code null}.
+     */
+    public DriverFailure(Driver d, Throwable t) {
+        throwable = Objects.requireNonNull(t);
+        driver = Objects.requireNonNull(d);
+    }
+
+    /**
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        // @formatter:off
+        return String.format("%s@%d.%d",
+                driver.getClass().getTypeName(),
+                driver.getMajorVersion(),
+                driver.getMinorVersion()
+            );
+        // @formatter:on
+    }
+
+    /**
+     * Returns the exception that describes the failure.
+     *
+     * @return the exception that describes the failure
+     */
+    public Throwable throwable() {
+        return throwable;
+    }
+
+    /**
+     * Returns the driver that failed.
+     *
+     * @return the driver that failed
+     */
+    public Driver driver() {
+        return driver;
     }
 }
