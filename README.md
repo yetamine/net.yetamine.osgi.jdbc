@@ -40,7 +40,7 @@ When the container is freshly started and the extender starts, everything should
 
 As noted above, the extender acts as a two-way bridge that publishes JDBC drivers deployed in OSGi bundles as OSGi services implementing `java.sql.Driver` interface, so that any OSGi-based code may use the drivers directly, but it makes all such services available as drivers through `java.sql.DriverManager`. From the point of view of a developer, it is possible to write the JDBC code as usual, as if the code was not running in an OSGi container, e.g.:
 
-```{java}
+```java
 try (Connection connection = DriverManager.getConnection(url, properties)) {
     // Do something here
 }
