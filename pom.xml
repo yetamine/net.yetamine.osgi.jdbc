@@ -28,7 +28,7 @@
   <packaging>bundle</packaging>
 
   <name>net.yetamine.osgi.jdbc</name>
-  <description>JDBC support for OSGi.</description>
+  <description>JDBC extender for OSGi</description>
   <url>https://github.com/yetamine/net.yetamine.osgi.jdbc</url>
   <inceptionYear>2016</inceptionYear>
 
