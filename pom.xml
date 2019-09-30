@@ -20,90 +20,339 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>net.yetamine</groupId>
-        <artifactId>artifact-osgi</artifactId>
-        <version>1.1.1</version>
-    </parent>
+  <groupId>net.yetamine</groupId>
+  <artifactId>net.yetamine.osgi.jdbc</artifactId>
+  <version>${revision}</version>
+  <packaging>bundle</packaging>
 
-    <groupId>net.yetamine</groupId>
-    <artifactId>net.yetamine.osgi.jdbc</artifactId>
-    <version>2.0.0-SNAPSHOT</version>
-    <packaging>bundle</packaging>
+  <name>net.yetamine.osgi.jdbc</name>
+  <description>JDBC support for OSGi.</description>
+  <url>https://github.com/yetamine/net.yetamine.osgi.jdbc</url>
+  <inceptionYear>2016</inceptionYear>
 
-    <name>net.yetamine.osgi.jdbc</name>
-    <description>JDBC support for OSGi.</description>
-    <url>https://github.com/pdolezal/net.yetamine.osgi.jdbc</url>
-    <inceptionYear>2016</inceptionYear>
+  <organization>
+    <name>Yetamine</name>
+    <url>http://yetamine.net/</url>
+  </organization>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
 
-    <scm>
-        <connection>scm:git:https://github.com/pdolezal/net.yetamine.osgi.jdbc.git</connection>
-        <url>https://github.com/pdolezal/net.yetamine.osgi.jdbc.git</url>
-    </scm>
+  <developers>
+    <developer>
+      <id>pdolezal</id>
+      <name>Petr Doležal</name>
+    </developer>
+  </developers>
 
-    <properties>
-        <findbugs.excludeFilterFile>${project.basedir}/cfg/findbugs/exclude-filter.xml</findbugs.excludeFilterFile>
-        <pet4bnd.output>${project.build.directory}/exports.bnd</pet4bnd.output>
-    </properties>
+  <scm>
+    <connection>scm:git:https://github.com/yetamine/net.yetamine.osgi.jdbc.git</connection>
+    <url>https://github.com/yetamine/net.yetamine.osgi.jdbc.git</url>
+  </scm>
 
-    <build>
+  <properties>
+    <revision>2.0.0-SNAPSHOT</revision>
+
+    <!-- Branding and information supply -->
+    <info.builder>${project.organization.name}</info.builder>
+
+    <!-- Build options -->
+    <java.version>1.8</java.version>
+
+    <java.compiler.source>${java.version}</java.compiler.source>
+    <java.compiler.target>${java.version}</java.compiler.target>
+    <java.compiler.lint>all</java.compiler.lint>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <!-- Module assembly options -->
+    <module.name>${project.artifactId}</module.name>
+    <module.version>${project.version}</module.version>
+    <source.includePom>true</source.includePom>
+    <source.includeSrc>true</source.includeSrc>
+
+    <!-- Additional options -->
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.annotation.versioning</artifactId>
+      <version>1.1.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.core</artifactId>
+      <version>5.0.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.ow2.asm</groupId>
+      <artifactId>asm-debug-all</artifactId>
+      <version>5.0.3</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>1.7.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>7.0.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <directory>bin</directory>
+    <outputDirectory>bin/build-dist</outputDirectory>
+    <testOutputDirectory>bin/build-test</testOutputDirectory>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.0.0-M2</version>
+
+        <executions>
+          <execution>
+            <id>enforce-default</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <dependencyConvergence/>
+                <requireMavenVersion>
+                  <version>3.6</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>3.0.0</version>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+
+        <configuration>
+          <source>${java.compiler.source}</source>
+          <target>${java.compiler.target}</target>
+
+          <compilerArgs>
+            <arg>-Xlint:${java.compiler.lint}</arg>
+          </compilerArgs>
+
+          <showDeprecation>true</showDeprecation>
+          <showWarnings>true</showWarnings>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.1.1</version>
+
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Built-By>${info.builder}</Built-By>
+            </manifestEntries>
+          </archive>
+        </configuration>
+
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.1.0</version>
+
+        <configuration>
+          <archive>
+            <manifestEntries>
+              <Built-By>${info.builder}</Built-By>
+            </manifestEntries>
+          </archive>
+        </configuration>
+
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>package</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.2</version>
+      </plugin>
+
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-baseline-maven-plugin</artifactId>
+        <version>4.2.0</version>
+
+        <configuration>
+          <failOnMissing>false</failOnMissing>
+        </configuration>
+
+        <executions>
+          <execution>
+            <id>baseline</id>
+            <goals>
+              <goal>baseline</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <version>4.2.0</version>
+        <extensions>true</extensions>
+
+        <configuration>
+          <instructions>
+            <Bundle-Activator>net.yetamine.osgi.jdbc.internal.Activator</Bundle-Activator>
+            <!-- Because of the weaving, rather do not allow multiple versions in parallel -->
+            <Bundle-SymbolicName>${module.name};singleton:=true</Bundle-SymbolicName>
+            <DynamicImport-Package>*</DynamicImport-Package>
+            <_removeheaders>Private-Package, Include-Resource, Tool, Bnd-LastModified, Created-By, Built-By</_removeheaders>
+            <_sources>${source.includeSrc}</_sources>
+          </instructions>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>toolchains</id>
+
+      <build>
         <plugins>
-            <plugin>
-                <groupId>net.yetamine</groupId>
-                <artifactId>pet4bnd-maven-plugin</artifactId>
-            </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-toolchains-plugin</artifactId>
 
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
+            <configuration>
+              <toolchains>
+                <jdk>
+                  <version>${java.version}</version>
+                </jdk>
+              </toolchains>
+            </configuration>
 
-                <configuration>
-                    <instructions>
-                        <Bundle-Activator>net.yetamine.osgi.jdbc.internal.Activator</Bundle-Activator>
-                        <!-- Because of the weaving, rather do not allow multiple versions in parallel -->
-                        <Bundle-SymbolicName>${project.artifactId};singleton:=true</Bundle-SymbolicName>
-                        <DynamicImport-Package>*</DynamicImport-Package>
-                        <_include>${pet4bnd.output}</_include>
-                    </instructions>
-                </configuration>
-            </plugin>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>toolchain</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
         </plugins>
-    </build>
+      </build>
+    </profile>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.core</artifactId>
-            <version>5.0.0</version>
-            <scope>provided</scope>
-        </dependency>
+    <profile>
+      <id>preview</id>
 
-        <dependency>
-            <groupId>org.ow2.asm</groupId>
-            <artifactId>asm-debug-all</artifactId>
-            <version>5.0.3</version>
-            <scope>provided</scope>
-        </dependency>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
 
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.0</version>
-            <scope>provided</scope>
-        </dependency>
+            <configuration>
+              <skip>true</skip>
+            </configuration>
+          </plugin>
 
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-        </dependency>
-    </dependencies>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+
+            <configuration>
+              <skipSource>true</skipSource>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>release</id>
+
+      <properties>
+        <revision>1.1.2</revision>
+
+        <!-- Module assembly options -->
+        <source.includeSrc>false</source.includeSrc>
+      </properties>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-enforcer-plugin</artifactId>
+
+            <executions>
+              <execution>
+                <id>enforce-release</id>
+                <goals>
+                  <goal>enforce</goal>
+                </goals>
+                <configuration>
+                  <rules>
+                    <requireReleaseDeps/>
+                    <requireReleaseVersion/>
+                  </rules>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

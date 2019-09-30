@@ -19,4 +19,5 @@
  * weaving scope to the necessary minimum or to override the driver loading,
  * which occurs by default when the bundle becomes active.
  */
+@org.osgi.annotation.versioning.Version("1.0.0")
 package net.yetamine.osgi.jdbc.tweak;

@@ -54,4 +54,5 @@
  * <p>
  * Implementations of all interfaces in this package must be thread-safe.
  */
+@org.osgi.annotation.versioning.Version("1.0.2")
 package net.yetamine.osgi.jdbc;

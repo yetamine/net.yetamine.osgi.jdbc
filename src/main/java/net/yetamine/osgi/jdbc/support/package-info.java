@@ -17,4 +17,5 @@
 /**
  * This package contains various supportive classes.
  */
+@org.osgi.annotation.versioning.Version("1.1.0")
 package net.yetamine.osgi.jdbc.support;

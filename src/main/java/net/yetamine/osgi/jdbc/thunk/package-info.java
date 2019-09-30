@@ -22,4 +22,5 @@
  * be used directly by any code, in spite of being published. Its publishing is
  * necessary, so that the woven classes could call it.
  */
+@org.osgi.annotation.versioning.Version("1.0.0")
 package net.yetamine.osgi.jdbc.thunk;

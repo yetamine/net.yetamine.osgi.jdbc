@@ -43,9 +43,9 @@ public final class Activator implements BundleActivator {
     /** Common driver registrar, used by the thunk. */
     private static final DriverRegistrar REGISTRAR = new DriverRegistrar();
     /** Common driver provider for the thunk, published as a service too. */
-    private static volatile DriverProvider PROVIDER = DriverManagerAdapter.instance();
+    private static volatile DriverProvider provider = DriverManagerAdapter.instance();
     /** Common supportive executor for running the weaving-related tasks. */
-    private static volatile Executor EXECUTOR = Runnable::run;
+    private static volatile Executor executor = Runnable::run;
 
     /** Weaving hook service. */
     private DriverWeaving weavingService;
@@ -54,7 +54,7 @@ public final class Activator implements BundleActivator {
     /** Driver tracking and providing service. */
     private DriverTracking providingService;
     /** Executor service to manage. */
-    private ExecutorService executor;
+    private ExecutorService executorService;
 
     /**
      * Creates a new instance.
@@ -69,7 +69,7 @@ public final class Activator implements BundleActivator {
      * @return the current driver provider
      */
     public static DriverProvider provider() {
-        return PROVIDER;
+        return provider;
     }
 
     /**
@@ -87,7 +87,7 @@ public final class Activator implements BundleActivator {
      * @return the current executor
      */
     public static Executor executor() {
-        return EXECUTOR;
+        return executor;
     }
 
     /**
@@ -102,20 +102,20 @@ public final class Activator implements BundleActivator {
         providingService = new DriverTracking(context);
         weavingService = new DriverWeaving(context);
 
-        executor = Executors.newSingleThreadExecutor(r -> {
+        executorService = Executors.newSingleThreadExecutor(r -> {
             final Thread thread = new Thread(r, "net.yetamine.osgi.jdbc/WeavingSupport");
             thread.setDaemon(true);
             return thread;
         });
 
-        EXECUTOR = executor::execute;   // Bind the execution method to avoid casting to ExecutorService
+        executor = executorService::execute;   // Bind the execution method to avoid casting to ExecutorService
 
         weavingService.open();      // Firstly, start weaving, so the all loaded drivers could be woven
         bundleExtender.open();      // After weaving hook is ready, loading may start
         providingService.open();    // Finally, when some drivers are on the way, allow publishing them
 
         REGISTRAR.bind(context); // OK, wire it
-        PROVIDER = providingService.provider();
+        provider = providingService.provider();
 
         LOGGER.info("Activated JDBC support.");
     }
@@ -126,15 +126,15 @@ public final class Activator implements BundleActivator {
     public synchronized void stop(BundleContext context) throws Exception {
         LOGGER.info("Deactivating JDBC support.");
 
-        PROVIDER = DriverManagerAdapter.instance();
+        provider = DriverManagerAdapter.instance();
         REGISTRAR.release();
 
         providingService.close();   // Firstly, stop the provider to let its dependencies to shut down as soon as possible
-        bundleExtender.close();    // Then ensure no more drivers could be loaded or published
+        bundleExtender.close();     // Then ensure no more drivers could be loaded or published
         weavingService.close();     // Then it is possible to switch off the weaving
 
-        EXECUTOR = Runnable::run;
-        executor.shutdown();
+        executor = Runnable::run;
+        executorService.shutdown();
 
         LOGGER.info("Deactivated JDBC support.");
     }
