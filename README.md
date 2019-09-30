@@ -24,12 +24,12 @@ The installation consists just of three steps:
 
 It is important that the extender bundle starts before any JDBC code, so that all the code could adapted in a consistent way. Installing the bundle when the container is not running should be preferred if the container allows that. Otherwise all bundles with JDBC code should be stopped (e.g., by setting a suitable framework start level) and the container should be restarted after the installation in order to ensure that the extender could adapt all JDBC code correctly.
 
-**Installing the extender bundle** implies installing all its dependencies as well; fortunately, there are just two (their root packages are listed with the acceptable version range):
+**Installing the extender bundle** implies installing all its dependencies as well. Fortunately, there are just two (their root packages are listed with the acceptable version range):
 
-* *org.objectweb.asm @ [5.0,6)*
+* *org.objectweb.asm @ [7,8)*
 * *org.slf4j @ [1.7,2)*
 
-More advanced containers like [Karaf](http://karaf.apache.org/) provide these dependencies out of the box and it is not necessary to install them, which reduces the installation procedure a lot. (And a feature for Karaf will be created in the future.)
+Deploy the dependencies to your container if missing.
 
 **Adjusting the start level of the extender bundle** is required, as explained above, so that the extender bundle could start before any JDBC code and therefore be able to adapt it. Of course, it assumes that bundles in your container have some reasonable start levels assigned and there is a suitable start level, dedicated for system services, when the extender bundle could be started.
 
@@ -97,7 +97,7 @@ The major problem with the lifecycle management is that a class (specified in th
 For building this project is needed:
 
 * JDK 8 or newer.
-* Maven 3.3 or newer.
+* Maven 3.6 or newer.
 
 The requirements for *using* the library are summed up above.
 
@@ -107,4 +107,4 @@ The requirements for *using* the library are summed up above.
 The project is licensed under the [Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0). Contributions to the project are welcome and accepted if they can be incorporated without the need of changing the license or license conditions and terms.
 
 
-[![Yetamine logo](https://github.com/pdolezal/net.yetamine/raw/master/about/Yetamine_small.png "Our logo")](https://github.com/pdolezal/net.yetamine/blob/master/about/Yetamine_large.png)
+[![Yetamine logo](https://github.com/yetamine/yetamine.github.io/raw/master/brand/light/Yetamine_logo_opaque_100x28.png "Our logo")](https://github.com/yetamine/yetamine.github.io/blob/master/brand/light/Yetamine_logo_opaque.svg)
