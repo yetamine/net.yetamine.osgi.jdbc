@@ -52,6 +52,7 @@ public final class NilDriverSequence implements DriverSequence {
     /**
      * @see net.yetamine.osgi.jdbc.DriverSequence#iterator()
      */
+    @Override
     public Iterator<Driver> iterator() {
         return Collections.emptyIterator();
     }
@@ -59,6 +60,7 @@ public final class NilDriverSequence implements DriverSequence {
     /**
      * @see net.yetamine.osgi.jdbc.DriverSequence#stream()
      */
+    @Override
     public Stream<Driver> stream() {
         return Stream.empty();
     }
@@ -66,6 +68,7 @@ public final class NilDriverSequence implements DriverSequence {
     /**
      * @see java.lang.Iterable#spliterator()
      */
+    @Override
     public Spliterator<Driver> spliterator() {
         return Spliterators.emptySpliterator();
     }

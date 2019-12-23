@@ -96,6 +96,7 @@ final class BundleExtender implements AutoCloseable {
      *
      * @see java.lang.AutoCloseable#close()
      */
+    @Override
     public synchronized void close() {
         LOGGER.debug("Closing extender.");
         bundleTracker.close();
@@ -275,6 +276,7 @@ final class BundleExtender implements AutoCloseable {
         /**
          * @see java.lang.AutoCloseable#close()
          */
+        @Override
         public void close() {
             controller.cancel(bundle);
         }

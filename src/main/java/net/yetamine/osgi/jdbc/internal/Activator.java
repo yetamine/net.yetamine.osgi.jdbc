@@ -93,6 +93,7 @@ public final class Activator implements BundleActivator {
     /**
      * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
      */
+    @Override
     public synchronized void start(BundleContext context) throws Exception {
         LOGGER.info("Activating JDBC support.");
 
@@ -123,6 +124,7 @@ public final class Activator implements BundleActivator {
     /**
      * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
      */
+    @Override
     public synchronized void stop(BundleContext context) throws Exception {
         LOGGER.info("Deactivating JDBC support.");
 

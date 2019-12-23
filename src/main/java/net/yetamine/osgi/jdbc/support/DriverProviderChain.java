@@ -88,6 +88,7 @@ public final class DriverProviderChain implements DriverProvider {
     /**
      * @see net.yetamine.osgi.jdbc.DriverProvider#drivers()
      */
+    @Override
     public DriverSequence drivers() {
         return sequence;
     }
@@ -114,6 +115,7 @@ public final class DriverProviderChain implements DriverProvider {
         /**
          * @see net.yetamine.osgi.jdbc.DriverSequence#iterator()
          */
+        @Override
         public Iterator<Driver> iterator() {
             return stream().iterator();
         }
@@ -121,6 +123,7 @@ public final class DriverProviderChain implements DriverProvider {
         /**
          * @see net.yetamine.osgi.jdbc.DriverSequence#stream()
          */
+        @Override
         public Stream<Driver> stream() {
             return providers.stream().flatMap(provider -> provider.drivers().stream());
         }

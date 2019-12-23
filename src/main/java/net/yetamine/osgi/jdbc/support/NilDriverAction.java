@@ -58,6 +58,7 @@ public final class NilDriverAction implements DriverAction {
     /**
      * @see java.sql.DriverAction#deregister()
      */
+    @Override
     public void deregister() {
         // Do nothing
     }

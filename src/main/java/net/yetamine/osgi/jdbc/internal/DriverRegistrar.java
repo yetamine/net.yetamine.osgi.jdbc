@@ -143,6 +143,7 @@ public final class DriverRegistrar implements BundleController {
     /**
      * @see net.yetamine.osgi.jdbc.internal.BundleController#suspend(org.osgi.framework.Bundle)
      */
+    @Override
     public void suspend(Bundle bundle) {
         final long bundleId = bundle.getBundleId();
 
@@ -156,6 +157,7 @@ public final class DriverRegistrar implements BundleController {
     /**
      * @see net.yetamine.osgi.jdbc.internal.BundleController#resume(org.osgi.framework.Bundle)
      */
+    @Override
     public void resume(Bundle bundle) {
         final long bundleId = bundle.getBundleId();
 
@@ -169,6 +171,7 @@ public final class DriverRegistrar implements BundleController {
     /**
      * @see net.yetamine.osgi.jdbc.internal.BundleController#cancel(org.osgi.framework.Bundle)
      */
+    @Override
     public void cancel(Bundle bundle) {
         final long bundleId = bundle.getBundleId(); // Implicit null check
 

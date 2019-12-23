@@ -74,6 +74,7 @@ final class BundleControlOptions implements BundleControl.Options {
     /**
      * @see net.yetamine.osgi.jdbc.tweak.BundleControl.Options#bundle()
      */
+    @Override
     public Bundle bundle() {
         return bundle;
     }
@@ -81,6 +82,7 @@ final class BundleControlOptions implements BundleControl.Options {
     /**
      * @see net.yetamine.osgi.jdbc.tweak.BundleControl.Options#declaredDrivers()
      */
+    @Override
     public Set<String> declaredDrivers() {
         return declaredDrivers;
     }
@@ -88,6 +90,7 @@ final class BundleControlOptions implements BundleControl.Options {
     /**
      * @see net.yetamine.osgi.jdbc.tweak.BundleControl.Options#loadableDrivers()
      */
+    @Override
     public Set<String> loadableDrivers() {
         return loadableDrivers;
     }
@@ -95,6 +98,7 @@ final class BundleControlOptions implements BundleControl.Options {
     /**
      * @see net.yetamine.osgi.jdbc.tweak.BundleControl.Options#driversAvailable()
      */
+    @Override
     public Condition driversAvailable() {
         return driversAvailable;
     }
@@ -102,6 +106,7 @@ final class BundleControlOptions implements BundleControl.Options {
     /**
      * @see net.yetamine.osgi.jdbc.tweak.BundleControl.Options#driversAvailable(net.yetamine.osgi.jdbc.tweak.BundleControl.Condition)
      */
+    @Override
     public void driversAvailable(Condition value) {
         driversAvailable = Objects.requireNonNull(value);
     }

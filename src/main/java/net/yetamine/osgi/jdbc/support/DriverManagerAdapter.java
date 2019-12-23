@@ -78,6 +78,7 @@ public final class DriverManagerAdapter implements DriverProvider {
      * @see net.yetamine.osgi.jdbc.DriverProvider#connection(java.lang.String,
      *      java.util.Properties)
      */
+    @Override
     public Connection connection(String url, Properties properties) throws SQLException {
         return DriverManager.getConnection(url, properties);
     }
@@ -85,6 +86,7 @@ public final class DriverManagerAdapter implements DriverProvider {
     /**
      * @see net.yetamine.osgi.jdbc.DriverProvider#driver(java.lang.String)
      */
+    @Override
     public Driver driver(String url) throws SQLException {
         return DriverManager.getDriver(url);
     }
@@ -92,6 +94,7 @@ public final class DriverManagerAdapter implements DriverProvider {
     /**
      * @see net.yetamine.osgi.jdbc.DriverProvider#drivers()
      */
+    @Override
     public DriverSequence drivers() {
         return () -> EnumerationIterator.from(DriverManager.getDrivers());
     }

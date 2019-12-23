@@ -55,6 +55,7 @@ final class WeavingFilterTracker extends ServiceTracker<WeavingFilter, WeavingFi
      * @see net.yetamine.osgi.jdbc.tweak.WeavingFilter#test(org.osgi.framework.Bundle,
      *      java.lang.String)
      */
+    @Override
     public boolean test(Bundle bundle, String className) {
         for (Map.Entry<ServiceReference<WeavingFilter>, WeavingFilter> entry : filters.entrySet()) {
             final WeavingFilter service = entry.getValue();

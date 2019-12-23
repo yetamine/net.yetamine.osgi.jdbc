@@ -24,13 +24,13 @@ import java.sql.Driver;
 public final class DriverConstants {
 
     /**
-     * The name of the service property of a {@link Long} value with the
-     * identifier of the bundle that originally registered the driver.
+     * Name of the service property of a {@link Long} value with the identifier
+     * of the bundle that originally registered the driver.
      */
     public static final String DRIVER_BUNDLE = "driver.bundle";
 
     /**
-     * The name of the service property of a {@link String} value with the class
+     * Name of the service property of a {@link String} value with the class
      * name of the driver implementation. Although this value is often not equal
      * to the class name specified in the driver service declaration, both share
      * usually a significant package prefix, hence it can be deduced their
@@ -39,8 +39,8 @@ public final class DriverConstants {
     public static final String DRIVER_CLASS = "driver.class";
 
     /**
-     * The name of the service property of a {@link String} value with the
-     * version of the driver as reported by the driver in the usual format
+     * Name of the service property of a {@link String} value with the version
+     * of the driver as reported by the driver in the usual format
      * <i>major.minor</i>.
      */
     public static final String DRIVER_VERSION = "driver.version";

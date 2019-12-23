@@ -83,6 +83,7 @@ final class DriverTracking implements AutoCloseable {
      *
      * @see java.lang.AutoCloseable#close()
      */
+    @Override
     public synchronized void close() {
         if (service == null) {
             return;
@@ -138,6 +139,7 @@ final class DriverTracking implements AutoCloseable {
         /**
          * @see net.yetamine.osgi.jdbc.DriverProvider#drivers()
          */
+        @Override
         public DriverSequence drivers() {
             return this;
         }
@@ -147,6 +149,7 @@ final class DriverTracking implements AutoCloseable {
         /**
          * @see net.yetamine.osgi.jdbc.DriverSequence#iterator()
          */
+        @Override
         public Iterator<Driver> iterator() {
             return drivers.values().iterator();
         }
@@ -154,6 +157,7 @@ final class DriverTracking implements AutoCloseable {
         /**
          * @see net.yetamine.osgi.jdbc.DriverSequence#stream()
          */
+        @Override
         public Stream<Driver> stream() {
             return drivers.values().stream();
         }

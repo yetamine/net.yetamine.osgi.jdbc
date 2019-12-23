@@ -39,6 +39,7 @@ public interface EnumerationIterator<E> extends Iterator<E> {
     /**
      * @see java.util.Iterator#hasNext()
      */
+    @Override
     default boolean hasNext() {
         return enumeration().hasMoreElements();
     }
@@ -46,6 +47,7 @@ public interface EnumerationIterator<E> extends Iterator<E> {
     /**
      * @see java.util.Iterator#next()
      */
+    @Override
     default E next() {
         return enumeration().nextElement();
     }

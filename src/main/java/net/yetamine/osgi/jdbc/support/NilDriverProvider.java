@@ -46,6 +46,7 @@ public final class NilDriverProvider implements DriverProvider {
     /**
      * @see net.yetamine.osgi.jdbc.DriverProvider#drivers()
      */
+    @Override
     public DriverSequence drivers() {
         return NilDriverSequence.instance();
     }

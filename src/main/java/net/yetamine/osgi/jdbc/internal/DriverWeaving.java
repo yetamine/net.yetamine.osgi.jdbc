@@ -86,6 +86,7 @@ final class DriverWeaving implements AutoCloseable {
      *
      * @see java.lang.AutoCloseable#close()
      */
+    @Override
     public synchronized void close() {
         if (service == null) {
             return;

@@ -50,6 +50,7 @@ final class BundleControlTracker extends ServiceTracker<BundleControl, BundleCon
     /**
      * @see net.yetamine.osgi.jdbc.tweak.BundleControl#adjust(net.yetamine.osgi.jdbc.tweak.BundleControl.Options)
      */
+    @Override
     public void adjust(Options options) {
         controls.items().forEach(item -> {
             final BundleControl control = item.value();
