@@ -119,9 +119,9 @@
   </dependencies>
 
   <build>
-    <directory>bin</directory>
-    <outputDirectory>bin/build-dist</outputDirectory>
-    <testOutputDirectory>bin/build-test</testOutputDirectory>
+    <directory>target</directory>
+    <outputDirectory>${project.build.directory}/classes-dist</outputDirectory>
+    <testOutputDirectory>${project.build.directory}/classes-test</testOutputDirectory>
 
     <plugins>
       <plugin>

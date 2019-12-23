@@ -1,8 +1,11 @@
-# Ignore derived artifacts
-/bin/
+# Derived artifacts
+target/
 
-# Ignore Eclipse settings
-/.settings/
-/.classpath
-/.project
-/bin/
+# Mac
+.DS_Store
+
+# Eclipse
+.metadata/
+.settings/
+.classpath
+.project
