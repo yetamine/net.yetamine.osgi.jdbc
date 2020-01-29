@@ -347,9 +347,13 @@ final class OrderedSequence<K, V> {
             result = items;
 
             if (result == null) {
-                result = mapping.values().stream()  // @formatter:break
-                        .sorted(comparator)         // Make it ordered as expected
-                        .collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+                result = mapping
+                    .values()
+                    .stream()
+                    .sorted(comparator)
+                    .collect(Collectors.collectingAndThen(
+                        Collectors.toList(),
+                        Collections::unmodifiableList));
 
                 items = result;
             }

@@ -190,13 +190,10 @@ final class DriverFailure {
      */
     @Override
     public String toString() {
-        // @formatter:off
         return String.format("%s@%d.%d",
-                driver.getClass().getTypeName(),
-                driver.getMajorVersion(),
-                driver.getMinorVersion()
-            );
-        // @formatter:on
+            driver.getClass().getTypeName(),
+            driver.getMajorVersion(),
+            driver.getMinorVersion());
     }
 
     /**

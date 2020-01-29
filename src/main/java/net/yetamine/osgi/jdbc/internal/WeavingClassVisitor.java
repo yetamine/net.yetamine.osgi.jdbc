@@ -290,8 +290,8 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
         public static final ClassReference DRIVER_MANAGER = new ClassReference(DriverManager.class);
 
         /** Reference to the thunking class which shall intercept the calls. */
-        public static final ClassReference THUNKING_CLASS = ClassReference.resolve( // @formatter:break
-                "net.yetamine.osgi.jdbc.thunk.DriverSupportThunk"                   // Use the by-name resolution to break the dependency cycle
+        public static final ClassReference THUNKING_CLASS = ClassReference.resolve(
+            "net.yetamine.osgi.jdbc.thunk.DriverSupportThunk" // Use the by-name resolution to break the dependency cycle
         );
 
         /**
@@ -305,10 +305,10 @@ final class WeavingClassVisitor extends ClassVisitor implements Opcodes {
          */
         private static final Map<MethodReference, MethodReference> REDIRECTIONS;
         static { // Rather compute the all the constants from the actual classes
-            final Set<MethodReference> thunkingMethods = Stream             // Make a set from the stream
-                    .of(THUNKING_CLASS.classType().getMethods())            // Get the public methods
-                    .map(MethodReference::new)                              // Make references to the methods
-                    .collect(Collectors.toSet());
+            final Set<MethodReference> thunkingMethods = Stream     // Make a set from the stream
+                .of(THUNKING_CLASS.classType().getMethods())        // Get the public methods
+                .map(MethodReference::new)                          // Make references to the methods
+                .collect(Collectors.toSet());
 
             // Compute the mapping to all methods with the same name and descriptor, except
             // for the the caller identification, which shall be woven in the code
